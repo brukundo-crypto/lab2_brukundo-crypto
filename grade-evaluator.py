@@ -182,6 +182,33 @@ def category_result(assignments, group):
     return earned, available, percentage
 
 
+def find_resubmissions(assignments):
+    """Return the failed formative assignments carrying the highest weight.
+
+    Every assignment tied on that highest weight is returned, because the
+    brief asks for all of them to be shown.
+    """
+    failed = []
+    for record in assignments:
+        if record['group'] == 'Formative' and record['score'] < PASS_MARK:
+            failed.append(record)
+
+    if len(failed) == 0:
+        return []
+
+    highest = failed[0]['weight']
+    for record in failed:
+        if record['weight'] > highest:
+            highest = record['weight']
+
+    eligible = []
+    for record in failed:
+        if record['weight'] == highest:
+            eligible.append(record)
+
+    return eligible
+
+
 def evaluate_grades(data):
     """Validate the records, then report the transcript for the student."""
     print("\n--- Processing Grades ---")
@@ -225,6 +252,25 @@ def evaluate_grades(data):
         if s_percent < PASS_MARK:
             print("  Reason: Summative is {:.2f}%, below the {:.0f}% "
                   "required.".format(s_percent, PASS_MARK))
+
+    eligible = find_resubmissions(data)
+
+    print("\n--- Resubmission ---")
+    if len(eligible) == 0:
+        print("No formative assignment was failed, so there is nothing "
+              "to resubmit.")
+    elif len(eligible) == 1:
+        record = eligible[0]
+        print("Eligible for resubmission (highest-weight failed formative):")
+        print("  - {} (score {:.2f}, weight {:.2f})".format(
+            record['assignment'], record['score'], record['weight']))
+    else:
+        print("{} assignments are tied on the highest weight among the "
+              "failed formatives, so all of them are "
+              "eligible:".format(len(eligible)))
+        for record in eligible:
+            print("  - {} (score {:.2f}, weight {:.2f})".format(
+                record['assignment'], record['score'], record['weight']))
 
 
 if __name__ == "__main__":
