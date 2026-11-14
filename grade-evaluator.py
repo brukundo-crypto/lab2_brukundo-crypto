@@ -10,10 +10,15 @@ import sys
 import os
 
 REQUIRED_COLUMNS = ["assignment", "group", "score", "weight"]
+VALID_GROUPS = ["Formative", "Summative"]
 
 
 def load_csv_data():
-    """Prompt for a filename and read every row into a list."""
+    """Prompt for a filename and extract every usable row into a list.
+
+    Rows that are blank, incomplete, or hold values that are not numbers
+    are reported and skipped, rather than being allowed to crash the run.
+    """
     filename = input(
         "Enter the name of the CSV file to process (e.g., grades.csv): "
     ).strip()
@@ -30,6 +35,7 @@ def load_csv_data():
         sys.exit(1)
 
     assignments = []
+    skipped = 0
 
     try:
         with open(filename, mode='r', encoding='utf-8') as file:
@@ -51,16 +57,60 @@ def load_csv_data():
                     ",".join(REQUIRED_COLUMNS)))
                 sys.exit(1)
 
+            line_number = 1
             for row in reader:
+                line_number += 1
+
+                name = (row.get('assignment') or "").strip()
+                group = (row.get('group') or "").strip().capitalize()
+                score_text = (row.get('score') or "").strip()
+                weight_text = (row.get('weight') or "").strip()
+
+                if (name == "" and group == "" and score_text == ""
+                        and weight_text == ""):
+                    continue
+
+                if (name == "" or group == "" or score_text == ""
+                        or weight_text == ""):
+                    print("  Skipped line {}: one or more values are "
+                          "missing.".format(line_number))
+                    skipped += 1
+                    continue
+
+                if group not in VALID_GROUPS:
+                    print("  Skipped line {} ('{}'): group '{}' must be "
+                          "Formative or Summative.".format(
+                              line_number, name, group))
+                    skipped += 1
+                    continue
+
+                try:
+                    score = float(score_text)
+                    weight = float(weight_text)
+                except ValueError:
+                    print("  Skipped line {} ('{}'): score and weight must "
+                          "be numbers, for example 85 and 20.".format(
+                              line_number, name))
+                    skipped += 1
+                    continue
+
                 assignments.append({
-                    'assignment': row['assignment'],
-                    'group': row['group'],
-                    'score': float(row['score']),
-                    'weight': float(row['weight'])
+                    'assignment': name,
+                    'group': group,
+                    'score': score,
+                    'weight': weight
                 })
 
     except OSError as error:
         print("An error occurred while reading the file: {}".format(error))
+        sys.exit(1)
+
+    if skipped > 0:
+        print("  {} unusable row(s) were skipped.".format(skipped))
+
+    if len(assignments) == 0:
+        print("Error: '{}' contains no usable assignment rows.".format(
+            filename))
         sys.exit(1)
 
     return assignments
