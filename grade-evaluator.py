@@ -12,6 +12,7 @@ import os
 REQUIRED_TOTAL_WEIGHT = 100.0
 REQUIRED_FORMATIVE_WEIGHT = 60.0
 REQUIRED_SUMMATIVE_WEIGHT = 40.0
+GPA_SCALE = 5.0
 TOLERANCE = 0.001
 REQUIRED_COLUMNS = ["assignment", "group", "score", "weight"]
 VALID_GROUPS = ["Formative", "Summative"]
@@ -163,6 +164,23 @@ def validate_weights(assignments):
     return problems
 
 
+def category_result(assignments, group):
+    """Return the points earned, the weight available, and the percentage."""
+    earned = 0.0
+    available = 0.0
+    for record in assignments:
+        if record['group'] == group:
+            earned += record['score'] * record['weight'] / 100
+            available += record['weight']
+
+    if available == 0:
+        percentage = 0.0
+    else:
+        percentage = earned / available * 100
+
+    return earned, available, percentage
+
+
 def evaluate_grades(data):
     """Validate the records, then report the transcript for the student."""
     print("\n--- Processing Grades ---")
@@ -178,6 +196,20 @@ def evaluate_grades(data):
         return
 
     print("All scores are within 0-100 and the weighting is correct.")
+
+    f_earned, f_available, f_percent = category_result(data, 'Formative')
+    s_earned, s_available, s_percent = category_result(data, 'Summative')
+
+    final_grade = f_earned + s_earned
+    gpa = final_grade / 100 * GPA_SCALE
+
+    print("\nFormative : {:>6.2f} / {:<6.2f} ({:.2f}%)".format(
+        f_earned, f_available, f_percent))
+    print("Summative : {:>6.2f} / {:<6.2f} ({:.2f}%)".format(
+        s_earned, s_available, s_percent))
+
+    print("\nFinal Grade : {:.2f} / 100".format(final_grade))
+    print("GPA         : {:.2f} / {:.1f}".format(gpa, GPA_SCALE))
 
 
 if __name__ == "__main__":
