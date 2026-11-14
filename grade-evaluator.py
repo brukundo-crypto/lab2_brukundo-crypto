@@ -9,6 +9,8 @@ import csv
 import sys
 import os
 
+REQUIRED_COLUMNS = ["assignment", "group", "score", "weight"]
+
 
 def load_csv_data():
     """Prompt for a filename and read every row into a list."""
@@ -16,21 +18,50 @@ def load_csv_data():
         "Enter the name of the CSV file to process (e.g., grades.csv): "
     ).strip()
 
+    if filename == "":
+        print("Error: no filename was entered. "
+              "Please run the program again and type a filename.")
+        sys.exit(1)
+
     if not os.path.exists(filename):
         print("Error: The file '{}' was not found.".format(filename))
+        print("Check the spelling, or run the program from the folder "
+              "that holds the file.")
         sys.exit(1)
 
     assignments = []
 
-    with open(filename, mode='r', encoding='utf-8') as file:
-        reader = csv.DictReader(file)
-        for row in reader:
-            assignments.append({
-                'assignment': row['assignment'],
-                'group': row['group'],
-                'score': float(row['score']),
-                'weight': float(row['weight'])
-            })
+    try:
+        with open(filename, mode='r', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+
+            if reader.fieldnames is None:
+                print("Error: '{}' is empty, so there is nothing to "
+                      "evaluate.".format(filename))
+                sys.exit(1)
+
+            missing = []
+            for column in REQUIRED_COLUMNS:
+                if column not in reader.fieldnames:
+                    missing.append(column)
+            if missing:
+                print("Error: '{}' is missing the column(s): {}.".format(
+                    filename, ", ".join(missing)))
+                print("The file must have this header row: {}".format(
+                    ",".join(REQUIRED_COLUMNS)))
+                sys.exit(1)
+
+            for row in reader:
+                assignments.append({
+                    'assignment': row['assignment'],
+                    'group': row['group'],
+                    'score': float(row['score']),
+                    'weight': float(row['weight'])
+                })
+
+    except OSError as error:
+        print("An error occurred while reading the file: {}".format(error))
+        sys.exit(1)
 
     return assignments
 
