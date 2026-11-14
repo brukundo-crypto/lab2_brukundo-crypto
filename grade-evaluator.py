@@ -9,6 +9,7 @@ import csv
 import sys
 import os
 
+PASS_MARK = 50.0
 REQUIRED_TOTAL_WEIGHT = 100.0
 REQUIRED_FORMATIVE_WEIGHT = 60.0
 REQUIRED_SUMMATIVE_WEIGHT = 40.0
@@ -210,6 +211,20 @@ def evaluate_grades(data):
 
     print("\nFinal Grade : {:.2f} / 100".format(final_grade))
     print("GPA         : {:.2f} / {:.1f}".format(gpa, GPA_SCALE))
+
+    passed = f_percent >= PASS_MARK and s_percent >= PASS_MARK
+
+    print("\n--- Final Decision ---")
+    if passed:
+        print("Status: PASSED")
+    else:
+        print("Status: FAILED")
+        if f_percent < PASS_MARK:
+            print("  Reason: Formative is {:.2f}%, below the {:.0f}% "
+                  "required.".format(f_percent, PASS_MARK))
+        if s_percent < PASS_MARK:
+            print("  Reason: Summative is {:.2f}%, below the {:.0f}% "
+                  "required.".format(s_percent, PASS_MARK))
 
 
 if __name__ == "__main__":
