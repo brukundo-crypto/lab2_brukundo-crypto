@@ -209,6 +209,20 @@ def find_resubmissions(assignments):
     return eligible
 
 
+def print_breakdown(assignments):
+    """Print one line per assignment showing the points it contributed."""
+    print("\n--- Assignment Breakdown ---")
+    print("{:<38}{:<12}{:>8}{:>9}{:>9}".format(
+        "Assignment", "Group", "Score", "Weight", "Earned"))
+    print("-" * 76)
+    for record in assignments:
+        earned = record['score'] * record['weight'] / 100
+        print("{:<38}{:<12}{:>8.2f}{:>9.2f}{:>9.2f}".format(
+            record['assignment'], record['group'],
+            record['score'], record['weight'], earned))
+    print("-" * 76)
+
+
 def evaluate_grades(data):
     """Validate the records, then report the transcript for the student."""
     print("\n--- Processing Grades ---")
@@ -224,6 +238,8 @@ def evaluate_grades(data):
         return
 
     print("All scores are within 0-100 and the weighting is correct.")
+
+    print_breakdown(data)
 
     f_earned, f_available, f_percent = category_result(data, 'Formative')
     s_earned, s_available, s_percent = category_result(data, 'Summative')
