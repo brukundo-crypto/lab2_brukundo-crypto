@@ -9,6 +9,10 @@ import csv
 import sys
 import os
 
+REQUIRED_TOTAL_WEIGHT = 100.0
+REQUIRED_FORMATIVE_WEIGHT = 60.0
+REQUIRED_SUMMATIVE_WEIGHT = 40.0
+TOLERANCE = 0.001
 REQUIRED_COLUMNS = ["assignment", "group", "score", "weight"]
 VALID_GROUPS = ["Formative", "Summative"]
 
@@ -127,12 +131,44 @@ def validate_scores(assignments):
     return problems
 
 
+def total_weight(assignments, group=None):
+    """Return the summed weight of every record, or of one group."""
+    total = 0.0
+    for record in assignments:
+        if group is None or record['group'] == group:
+            total += record['weight']
+    return total
+
+
+def validate_weights(assignments):
+    """Return a list of problems with the weighting of the course."""
+    problems = []
+
+    overall = total_weight(assignments)
+    formative = total_weight(assignments, 'Formative')
+    summative = total_weight(assignments, 'Summative')
+
+    if abs(overall - REQUIRED_TOTAL_WEIGHT) > TOLERANCE:
+        problems.append(
+            "Total weight is {:.2f}, but it must be exactly {:.0f}.".format(
+                overall, REQUIRED_TOTAL_WEIGHT))
+    if abs(formative - REQUIRED_FORMATIVE_WEIGHT) > TOLERANCE:
+        problems.append(
+            "Formative weight is {:.2f}, but it must be exactly "
+            "{:.0f}.".format(formative, REQUIRED_FORMATIVE_WEIGHT))
+    if abs(summative - REQUIRED_SUMMATIVE_WEIGHT) > TOLERANCE:
+        problems.append(
+            "Summative weight is {:.2f}, but it must be exactly "
+            "{:.0f}.".format(summative, REQUIRED_SUMMATIVE_WEIGHT))
+    return problems
+
+
 def evaluate_grades(data):
     """Validate the records, then report the transcript for the student."""
     print("\n--- Processing Grades ---")
     print("Loaded {} assignment record(s).".format(len(data)))
 
-    problems = validate_scores(data)
+    problems = validate_scores(data) + validate_weights(data)
     if problems:
         print("\nThe following problems must be fixed before a grade can "
               "be calculated:")
@@ -141,7 +177,7 @@ def evaluate_grades(data):
         print("\nNo GPA was calculated, because the data is not valid.")
         return
 
-    print("All scores are within 0-100.")
+    print("All scores are within 0-100 and the weighting is correct.")
 
 
 if __name__ == "__main__":
