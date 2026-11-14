@@ -116,8 +116,34 @@ def load_csv_data():
     return assignments
 
 
+def validate_scores(assignments):
+    """Return a list of problems with any score outside 0 to 100."""
+    problems = []
+    for record in assignments:
+        if record['score'] < 0 or record['score'] > 100:
+            problems.append(
+                "{}: score {:.2f} is outside the valid 0-100 range.".format(
+                    record['assignment'], record['score']))
+    return problems
+
+
+def evaluate_grades(data):
+    """Validate the records, then report the transcript for the student."""
+    print("\n--- Processing Grades ---")
+    print("Loaded {} assignment record(s).".format(len(data)))
+
+    problems = validate_scores(data)
+    if problems:
+        print("\nThe following problems must be fixed before a grade can "
+              "be calculated:")
+        for problem in problems:
+            print("  - {}".format(problem))
+        print("\nNo GPA was calculated, because the data is not valid.")
+        return
+
+    print("All scores are within 0-100.")
+
+
 if __name__ == "__main__":
     course_data = load_csv_data()
-    print("Loaded {} assignment record(s).".format(len(course_data)))
-    for record in course_data:
-        print(record)
+    evaluate_grades(course_data)
