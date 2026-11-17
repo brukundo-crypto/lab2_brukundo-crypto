@@ -1,10 +1,5 @@
 #!/usr/bin/python3
-"""ALU Transcript Generator.
-
-Reads a CSV of course assignments, validates the scores and the weighting,
-works out the final grade and GPA, decides PASSED or FAILED, and reports
-which formative assignment may be resubmitted.
-"""
+"""ALU Transcript Generator: validate a grades CSV and report the result."""
 import csv
 import sys
 import os
@@ -20,11 +15,7 @@ VALID_GROUPS = ["Formative", "Summative"]
 
 
 def load_csv_data():
-    """Prompt for a filename and extract every usable row into a list.
-
-    Rows that are blank, incomplete, or hold values that are not numbers
-    are reported and skipped, rather than being allowed to crash the run.
-    """
+    """Prompt for a filename and return every usable row as a list."""
     filename = input(
         "Enter the name of the CSV file to process (e.g., grades.csv): "
     ).strip()
@@ -183,11 +174,7 @@ def category_result(assignments, group):
 
 
 def find_resubmissions(assignments):
-    """Return the failed formative assignments carrying the highest weight.
-
-    Every assignment tied on that highest weight is returned, because the
-    brief asks for all of them to be shown.
-    """
+    """Return all failed formative assignments tied on the highest weight."""
     failed = []
     for record in assignments:
         if record['group'] == 'Formative' and record['score'] < PASS_MARK:
